@@ -28,10 +28,6 @@ export default function MusicPlayer() {
     const togglePlay = () => setIsPlaying(!isPlaying);
     const toggleMute = () => setIsMuted(!isMuted);
 
-    const nextTrack = () => {
-        setCurrentTrack((prev) => (prev + 1) % playlist.length);
-    };
-
     const openInSpotify = (url: string) => {
         window.open(url, '_blank');
     };

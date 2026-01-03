@@ -6,15 +6,22 @@ import CursorTrail from './components/CursorTrail';
 import ThemeToggle from './components/ThemeToggle';
 import Hero from './components/Hero';
 import About from './components/About';
+import ResumeTimeline from './components/ResumeTimeline';
+import SkillsRadar from './components/SkillsRadar';
 import TechStack from './components/TechStack';
 import Projects from './components/Projects';
+import Testimonials from './components/Testimonials';
 import GitHubStats from './components/GitHubStats';
+import GitHubActivityFeed from './components/GitHubActivityFeed';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
+import CommandPalette from './components/CommandPalette';
+import MusicPlayer from './components/MusicPlayer';
+import EasterEggs from './components/EasterEggs';
 
 export default function App() {
-    const { theme } = useTheme();
+    useTheme(); // Initialize theme context
 
     // Check if device supports hover (not mobile)
     const isTouchDevice = typeof window !== 'undefined' &&
@@ -37,13 +44,26 @@ export default function App() {
             {/* Scroll progress */}
             <ScrollProgress />
 
+            {/* Command palette (Cmd+K) */}
+            <CommandPalette />
+
+            {/* Music player */}
+            <MusicPlayer />
+
+            {/* Easter eggs */}
+            <EasterEggs />
+
             {/* Main content */}
             <main>
                 <Hero />
                 <About />
+                <ResumeTimeline />
+                <SkillsRadar />
                 <TechStack />
                 <Projects />
+                <Testimonials />
                 <GitHubStats />
+                <GitHubActivityFeed />
                 <Contact />
             </main>
 
