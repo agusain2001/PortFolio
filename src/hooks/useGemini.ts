@@ -32,7 +32,7 @@ interface Message {
 
 // Available Gemini models - try in order
 const GEMINI_MODELS = [
-    'gemini-2.0-flash',
+    'gemini-2.0-flash-exp',
     'gemini-1.5-flash',
     'gemini-1.5-flash-latest',
     'gemini-pro',
@@ -56,6 +56,40 @@ export function useGemini() {
         try {
             const genAI = new GoogleGenerativeAI(apiKey);
 
+            // Filter to only include user messages for building history
+            // and ensure history starts with a user message
+            const userMessages = messages.filter(m => m.role === 'user');
+
+            if (userMessages.length === 0) {
+                throw new Error('No user message found');
+            }
+
+            // Get the current user message (last one)
+            const currentMessage = userMessages[userMessages.length - 1].content;
+
+            // Build proper history: only include previous conversation pairs
+            // Must start with 'user' and alternate between user/model
+            const previousMessages = messages.slice(0, -1); // All except the last
+            const history: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
+
+            // Skip the initial assistant greeting and build proper alternating history
+            let foundFirstUser = false;
+            for (const msg of previousMessages) {
+                if (!foundFirstUser && msg.role === 'assistant') {
+                    // Skip initial assistant greeting
+                    continue;
+                }
+                if (msg.role === 'user') {
+                    foundFirstUser = true;
+                }
+                if (foundFirstUser) {
+                    history.push({
+                        role: msg.role === 'user' ? 'user' : 'model',
+                        parts: [{ text: msg.content }],
+                    });
+                }
+            }
+
             // Try models in order until one works
             let lastError: Error | null = null;
 
@@ -64,20 +98,17 @@ export function useGemini() {
                     const model = genAI.getGenerativeModel({ model: modelName });
 
                     const chat = model.startChat({
-                        history: messages.slice(0, -1).map(msg => ({
-                            role: msg.role === 'user' ? 'user' : 'model',
-                            parts: [{ text: msg.content }],
-                        })),
+                        history: history,
                         generationConfig: {
                             maxOutputTokens: 500,
                             temperature: 0.7,
                         },
                     });
 
-                    const lastMessage = messages[messages.length - 1];
-                    const prompt = messages.length === 1
-                        ? `${SYSTEM_PROMPT}\n\nUser: ${lastMessage.content}`
-                        : lastMessage.content;
+                    // Prepend system prompt to first message
+                    const prompt = userMessages.length === 1
+                        ? `${SYSTEM_PROMPT}\n\nUser: ${currentMessage}`
+                        : currentMessage;
 
                     const result = await chat.sendMessage(prompt);
                     const response = result.response.text();
@@ -87,7 +118,7 @@ export function useGemini() {
                     return response;
                 } catch (err) {
                     lastError = err instanceof Error ? err : new Error('Unknown error');
-                    console.warn(`Model ${modelName} failed, trying next...`, err);
+                    console.warn(`Model ${modelName} failed:`, err);
                     continue;
                 }
             }
