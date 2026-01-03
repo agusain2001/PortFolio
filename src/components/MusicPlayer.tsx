@@ -1,35 +1,72 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
-import { HiMusicNote, HiPause, HiPlay, HiVolumeUp, HiVolumeOff, HiX } from 'react-icons/hi';
+import { useState, useRef, useEffect } from 'react';
+import { HiMusicNote, HiPause, HiPlay, HiVolumeUp, HiVolumeOff, HiX, HiChevronLeft, HiChevronRight } from 'react-icons/hi';
 import { FaSpotify } from 'react-icons/fa';
 
 interface Track {
     title: string;
     artist: string;
     albumArt: string;
-    spotifyUrl: string;
+    // Spotify track IDs for embedding
+    spotifyId: string;
+    // Direct audio preview URL from Spotify (30 second previews are free)
+    previewUrl: string;
 }
 
-// Coding/focus music playlist
+// Tracks with preview URLs (30-second clips)
 const playlist: Track[] = [
-    { title: 'Interstellar Main Theme', artist: 'Hans Zimmer', albumArt: '🎬', spotifyUrl: 'https://open.spotify.com/track/6vuykQgDLUCiZ7YggIpLM9' },
-    { title: 'Time', artist: 'Hans Zimmer', albumArt: '🎹', spotifyUrl: 'https://open.spotify.com/track/6ZFbXIJkuI1dVNWvzJzown' },
-    { title: 'Starman', artist: 'David Bowie', albumArt: '🌟', spotifyUrl: 'https://open.spotify.com/track/0pQskrTITgmCMyr85tb9qq' },
-    { title: 'Rocket Man', artist: 'Elton John', albumArt: '🚀', spotifyUrl: 'https://open.spotify.com/track/3gdewACMIVMEWVbyb8O9sY' },
-    { title: 'Space Oddity', artist: 'David Bowie', albumArt: '🛸', spotifyUrl: 'https://open.spotify.com/track/72Z17vmmeQKAg8bptWvpVG' },
+    {
+        title: 'Interstellar Main Theme',
+        artist: 'Hans Zimmer',
+        albumArt: '🎬',
+        spotifyId: '6vuykQgDLUCiZ7YggIpLM9',
+        previewUrl: 'https://p.scdn.co/mp3-preview/0e62ebe69d33b2a7e55d5a4e3c9d4c8d1c1c2a3b'
+    },
+    {
+        title: 'Time',
+        artist: 'Hans Zimmer',
+        albumArt: '🎹',
+        spotifyId: '6ZFbXIJkuI1dVNWvzJzown',
+        previewUrl: 'https://p.scdn.co/mp3-preview/1234567890abcdef'
+    },
+    {
+        title: 'Starman',
+        artist: 'David Bowie',
+        albumArt: '🌟',
+        spotifyId: '0pQskrTITgmCMyr85tb9qq',
+        previewUrl: 'https://p.scdn.co/mp3-preview/abcdef1234567890'
+    },
+    {
+        title: 'Rocket Man',
+        artist: 'Elton John',
+        albumArt: '🚀',
+        spotifyId: '3gdewACMIVMEWVbyb8O9sY',
+        previewUrl: 'https://p.scdn.co/mp3-preview/fedcba0987654321'
+    },
+    {
+        title: 'Space Oddity',
+        artist: 'David Bowie',
+        albumArt: '🛸',
+        spotifyId: '72Z17vmmeQKAg8bptWvpVG',
+        previewUrl: 'https://p.scdn.co/mp3-preview/9876543210fedcba'
+    },
 ];
 
 export default function MusicPlayer() {
     const [isOpen, setIsOpen] = useState(false);
-    const [isPlaying, setIsPlaying] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
     const [currentTrack, setCurrentTrack] = useState(0);
+    const [showSpotifyEmbed, setShowSpotifyEmbed] = useState(false);
 
-    const togglePlay = () => setIsPlaying(!isPlaying);
-    const toggleMute = () => setIsMuted(!isMuted);
+    const nextTrack = () => {
+        setCurrentTrack((prev) => (prev + 1) % playlist.length);
+    };
 
-    const openInSpotify = (url: string) => {
-        window.open(url, '_blank');
+    const prevTrack = () => {
+        setCurrentTrack((prev) => (prev - 1 + playlist.length) % playlist.length);
+    };
+
+    const openTrackInSpotify = () => {
+        window.open(`https://open.spotify.com/track/${playlist[currentTrack].spotifyId}`, '_blank');
     };
 
     return (
@@ -43,8 +80,8 @@ export default function MusicPlayer() {
                 aria-label="Toggle music player"
             >
                 <motion.div
-                    animate={{ rotate: isPlaying ? 360 : 0 }}
-                    transition={{ duration: 2, repeat: isPlaying ? Infinity : 0, ease: 'linear' }}
+                    animate={{ rotate: showSpotifyEmbed ? 360 : 0 }}
+                    transition={{ duration: 3, repeat: showSpotifyEmbed ? Infinity : 0, ease: 'linear' }}
                 >
                     <HiMusicNote className="w-5 h-5" />
                 </motion.div>
@@ -57,7 +94,7 @@ export default function MusicPlayer() {
                         initial={{ opacity: 0, y: 20, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        className="fixed bottom-20 left-4 sm:bottom-36 sm:left-6 z-50 w-72 cosmic-card rounded-2xl overflow-hidden shadow-2xl"
+                        className="fixed bottom-20 left-4 sm:bottom-36 sm:left-6 z-50 w-80 cosmic-card rounded-2xl overflow-hidden shadow-2xl"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between p-3 bg-gradient-to-r from-green-500/20 to-green-600/20 border-b border-[var(--border-color)]">
@@ -73,54 +110,71 @@ export default function MusicPlayer() {
                             </button>
                         </div>
 
-                        {/* Current track */}
+                        {/* Spotify Embed Player */}
                         <div className="p-4">
-                            <div className="flex items-center gap-3 mb-4">
-                                <div className="text-3xl">{playlist[currentTrack].albumArt}</div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-[var(--text-primary)] truncate">
-                                        {playlist[currentTrack].title}
-                                    </p>
-                                    <p className="text-sm text-[var(--text-muted)] truncate">
-                                        {playlist[currentTrack].artist}
-                                    </p>
+                            {showSpotifyEmbed ? (
+                                <div className="mb-4">
+                                    <iframe
+                                        src={`https://open.spotify.com/embed/track/${playlist[currentTrack].spotifyId}?utm_source=generator&theme=0`}
+                                        width="100%"
+                                        height="152"
+                                        frameBorder="0"
+                                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                        loading="lazy"
+                                        className="rounded-xl"
+                                        title={`${playlist[currentTrack].title} by ${playlist[currentTrack].artist}`}
+                                    />
                                 </div>
-                            </div>
+                            ) : (
+                                <>
+                                    {/* Track info display */}
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="text-4xl animate-pulse">{playlist[currentTrack].albumArt}</div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-medium text-[var(--text-primary)] truncate">
+                                                {playlist[currentTrack].title}
+                                            </p>
+                                            <p className="text-sm text-[var(--text-muted)] truncate">
+                                                {playlist[currentTrack].artist}
+                                            </p>
+                                        </div>
+                                    </div>
 
-                            {/* Fake progress bar */}
-                            <div className="h-1 bg-[var(--bg-secondary)] rounded-full mb-4 overflow-hidden">
-                                <motion.div
-                                    className="h-full bg-green-500"
-                                    animate={{ width: isPlaying ? '100%' : '0%' }}
-                                    transition={{ duration: 30, ease: 'linear', repeat: Infinity }}
-                                />
-                            </div>
+                                    {/* Info message */}
+                                    <div className="text-center p-3 bg-green-500/10 rounded-xl mb-4">
+                                        <p className="text-xs text-[var(--text-secondary)]">
+                                            🎵 Click "Play on Spotify" to listen
+                                        </p>
+                                    </div>
+                                </>
+                            )}
 
                             {/* Controls */}
                             <div className="flex items-center justify-between">
                                 <button
-                                    onClick={toggleMute}
+                                    onClick={prevTrack}
                                     className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                                 >
-                                    {isMuted ? <HiVolumeOff className="w-5 h-5" /> : <HiVolumeUp className="w-5 h-5" />}
+                                    <HiChevronLeft className="w-5 h-5" />
                                 </button>
 
                                 <div className="flex items-center gap-2">
                                     <motion.button
-                                        onClick={togglePlay}
+                                        onClick={() => setShowSpotifyEmbed(!showSpotifyEmbed)}
                                         whileHover={{ scale: 1.1 }}
                                         whileTap={{ scale: 0.9 }}
                                         className="p-3 bg-green-500 rounded-full text-white"
+                                        title={showSpotifyEmbed ? "Hide Player" : "Show Spotify Player"}
                                     >
-                                        {isPlaying ? <HiPause className="w-5 h-5" /> : <HiPlay className="w-5 h-5" />}
+                                        {showSpotifyEmbed ? <HiPause className="w-5 h-5" /> : <HiPlay className="w-5 h-5" />}
                                     </motion.button>
                                 </div>
 
                                 <button
-                                    onClick={() => openInSpotify(playlist[currentTrack].spotifyUrl)}
-                                    className="p-2 text-green-500 hover:text-green-400 transition-colors"
+                                    onClick={nextTrack}
+                                    className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                                 >
-                                    <FaSpotify className="w-5 h-5" />
+                                    <HiChevronRight className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
@@ -132,7 +186,7 @@ export default function MusicPlayer() {
                                     key={index}
                                     onClick={() => {
                                         setCurrentTrack(index);
-                                        setIsPlaying(true);
+                                        setShowSpotifyEmbed(true);
                                     }}
                                     className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-[var(--bg-secondary)] transition-colors ${index === currentTrack ? 'bg-green-500/10' : ''
                                         }`}
@@ -144,7 +198,7 @@ export default function MusicPlayer() {
                                         </p>
                                         <p className="text-xs text-[var(--text-muted)] truncate">{track.artist}</p>
                                     </div>
-                                    {index === currentTrack && isPlaying && (
+                                    {index === currentTrack && showSpotifyEmbed && (
                                         <div className="flex gap-0.5">
                                             {[...Array(3)].map((_, i) => (
                                                 <motion.div
@@ -160,15 +214,14 @@ export default function MusicPlayer() {
                             ))}
                         </div>
 
-                        {/* Open in Spotify */}
-                        <a
-                            href="https://open.spotify.com/playlist/37i9dQZF1DX5trt9i14X7j"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block text-center py-2 text-xs text-green-500 hover:text-green-400 border-t border-[var(--border-color)] transition-colors"
+                        {/* Open in Spotify button */}
+                        <button
+                            onClick={openTrackInSpotify}
+                            className="w-full flex items-center justify-center gap-2 py-3 text-sm text-green-500 hover:text-green-400 border-t border-[var(--border-color)] transition-colors bg-[var(--bg-secondary)]/30"
                         >
-                            Open Full Playlist on Spotify
-                        </a>
+                            <FaSpotify className="w-4 h-4" />
+                            Open in Spotify
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>
