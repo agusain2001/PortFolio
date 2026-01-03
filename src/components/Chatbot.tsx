@@ -47,10 +47,12 @@ export default function Chatbot() {
         try {
             const response = await sendMessage([...messages, userMessage], apiKey);
             setMessages(prev => [...prev, { role: 'assistant', content: response }]);
-        } catch {
+        } catch (err) {
+            const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+            console.error('Chatbot Error:', err);
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                content: "Transmission failed. Please check your API key coordinates or retry."
+                content: `⚠️ Error: ${errorMsg}. Please check your API key or try again.`
             }]);
         }
     };
@@ -145,8 +147,8 @@ export default function Chatbot() {
                                 >
                                     <div
                                         className={`max-w-[85%] px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm ${msg.role === 'user'
-                                                ? 'bg-gradient-to-r from-nebula-purple to-cosmic-blue text-white'
-                                                : 'cosmic-glass text-[var(--text-primary)]'
+                                            ? 'bg-gradient-to-r from-nebula-purple to-cosmic-blue text-white'
+                                            : 'cosmic-glass text-[var(--text-primary)]'
                                             }`}
                                     >
                                         {msg.content}

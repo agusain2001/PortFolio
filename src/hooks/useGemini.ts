@@ -30,6 +30,14 @@ interface Message {
     content: string;
 }
 
+// Available Gemini models - try in order
+const GEMINI_MODELS = [
+    'gemini-2.0-flash',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-latest',
+    'gemini-pro',
+];
+
 export function useGemini() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -47,31 +55,49 @@ export function useGemini() {
 
         try {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
-            const chat = model.startChat({
-                history: messages.slice(0, -1).map(msg => ({
-                    role: msg.role === 'user' ? 'user' : 'model',
-                    parts: [{ text: msg.content }],
-                })),
-                generationConfig: {
-                    maxOutputTokens: 500,
-                    temperature: 0.7,
-                },
-            });
+            // Try models in order until one works
+            let lastError: Error | null = null;
 
-            const lastMessage = messages[messages.length - 1];
-            const prompt = messages.length === 1
-                ? `${SYSTEM_PROMPT}\n\nUser: ${lastMessage.content}`
-                : lastMessage.content;
+            for (const modelName of GEMINI_MODELS) {
+                try {
+                    const model = genAI.getGenerativeModel({ model: modelName });
 
-            const result = await chat.sendMessage(prompt);
-            const response = result.response.text();
+                    const chat = model.startChat({
+                        history: messages.slice(0, -1).map(msg => ({
+                            role: msg.role === 'user' ? 'user' : 'model',
+                            parts: [{ text: msg.content }],
+                        })),
+                        generationConfig: {
+                            maxOutputTokens: 500,
+                            temperature: 0.7,
+                        },
+                    });
 
-            setIsLoading(false);
-            return response;
+                    const lastMessage = messages[messages.length - 1];
+                    const prompt = messages.length === 1
+                        ? `${SYSTEM_PROMPT}\n\nUser: ${lastMessage.content}`
+                        : lastMessage.content;
+
+                    const result = await chat.sendMessage(prompt);
+                    const response = result.response.text();
+
+                    setIsLoading(false);
+                    console.log(`✅ Using Gemini model: ${modelName}`);
+                    return response;
+                } catch (err) {
+                    lastError = err instanceof Error ? err : new Error('Unknown error');
+                    console.warn(`Model ${modelName} failed, trying next...`, err);
+                    continue;
+                }
+            }
+
+            // All models failed
+            throw lastError || new Error('All Gemini models failed');
+
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to get response';
+            console.error('Gemini API Error:', err);
             setError(errorMessage);
             setIsLoading(false);
             throw new Error(errorMessage);
