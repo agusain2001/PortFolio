@@ -172,7 +172,7 @@ export default function Navbar() {
                         {/* Mobile Menu Button */}
                         <motion.button
                             onClick={() => setIsOpen(!isOpen)}
-                            className="relative z-50 md:hidden p-2 rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-card)] mr-5"
+                            className="relative z-50 md:hidden p-2 rounded-lg text-[var(--text-primary)] hover:bg-[var(--bg-card)]"
                             whileHover={{ scale: prefersReducedMotion ? 1 : 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             aria-label="Toggle menu"
