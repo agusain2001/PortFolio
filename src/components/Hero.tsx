@@ -109,7 +109,7 @@ export default function Hero() {
                         Explore Projects 🚀
                     </a>
                     <a
-                        href="/resume.pdf"
+                        href={STATIC_VALUES.url.resumeView}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-6 py-3 sm:px-8 sm:py-3.5 cosmic-card rounded-full font-semibold text-[var(--text-primary)] hover:opacity-80 transition-all duration-300 text-sm sm:text-base"
