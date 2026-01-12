@@ -14,7 +14,6 @@ import Projects from './components/Projects';
 import Blog from './components/Blog';
 import Testimonials from './components/Testimonials';
 import GitHubStats from './components/GitHubStats';
-import GitHubActivityFeed from './components/GitHubActivityFeed';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
 import Chatbot from './components/Chatbot';
@@ -70,7 +69,7 @@ export default function App() {
                 <Blog />
                 <Testimonials />
                 <GitHubStats />
-                <GitHubActivityFeed />
+                {/* <GitHubActivityFeed /> */}
                 <Contact />
             </main>
 
