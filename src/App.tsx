@@ -47,13 +47,13 @@ export default function App() {
             <ScrollProgress />
 
             {/* Command palette (Cmd+K) */}
-            <CommandPalette />
+            {!isTouchDevice && <CommandPalette />}
 
             {/* Music player */}
             <MusicPlayer />
 
             {/* Easter eggs */}
-            <EasterEggs />
+            {!isTouchDevice && <EasterEggs />}
     
             <Suspense fallback={
                 <div className="flex items-center justify-center min-h-screen">
